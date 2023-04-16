@@ -14,11 +14,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Example {
+model Post {
+  id          String     @id @default(cuid())
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String     @unique
+  description String
+  reactions   Reaction[] @relation()
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  enabled     Boolean    @default(true)
+}
+
+model Reaction {
   id        String   @id @default(cuid())
-  name      String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  enabled   Boolean  @default(true)
+  value     String
 }
 
 // Necessary for Next auth
@@ -49,13 +65,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?    @unique
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
+  Post          Post[]
+  Reaction      Reaction[]
+  roles         String     @default("ROLE_USER")
+  followedBy User[]  @relation("UserFollows")
+  following  User[]  @relation("UserFollows")
 }
 
 model VerificationToken {
