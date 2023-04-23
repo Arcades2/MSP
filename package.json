@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@tanstack/react-query-devtools": "^4.29.2",
+    "@total-typescript/ts-reset": "^0.4.2",
     "@types/eslint": "^8.21.3",
     "@types/node": "^18.15.5",
     "@types/prettier": "^2.7.2",
