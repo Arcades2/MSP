@@ -4,6 +4,7 @@ import { getServerSideHelpers } from "~/server/helpers/ssHelpers";
 import { api } from "~/utils/api";
 import MusicPost from "~/components/MusicPost";
 import invariant from "tiny-invariant";
+import CreatePostForm from "~/components/CreatePostForm";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -34,8 +35,10 @@ const FeedPage: NextPage = () => {
         <h1>Feed</h1>
       </div>
       <div className="my-4 w-full border-t" />
+      <div className="p-2">
+        <CreatePostForm />
+      </div>
       <div>
-        <h2>Following</h2>
         {feed.data?.map((post) => (
           <div key={post.id} className="border-y">
             <MusicPost post={post} />

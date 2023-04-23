@@ -1,4 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createPostInput } from "~/common/validation/post";
 
 export const postRouter = createTRPCRouter({
   getFollowingPosts: protectedProcedure.query(({ ctx }) =>
@@ -24,6 +25,23 @@ export const postRouter = createTRPCRouter({
       include: {
         user: true,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     })
   ),
+  createPost: protectedProcedure
+    .input(createPostInput)
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.post.create({
+        data: {
+          ...input,
+          user: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
+        },
+      })
+    ),
 });

@@ -17,7 +17,7 @@ datasource db {
 model Post {
   id          String     @id @default(cuid())
   user        User       @relation(fields: [userId], references: [id])
-  userId      String     @unique
+  userId      String     
   description String
   url         String
   reactions   Reaction[] @relation()

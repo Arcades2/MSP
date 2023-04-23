@@ -11,6 +11,7 @@ type MusicPostProps = {
 const MusicPost = ({ post }: MusicPostProps) => (
   <div className="flex flex-col gap-4 p-2">
     <Avatar user={post.user} />
+    <p>{post.createdAt.toLocaleDateString("fr-fr")}</p>
     <p>{post.description}</p>
     <ReactPlayer
       url={post.url}
