@@ -37,17 +37,15 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    session: ({ session, token }) => {
-      return {
-        ...session,
-        user: (({ name, email, picture, sub }) => ({
-          name,
-          email,
-          picture,
-          id: sub,
-        }))(token),
-      };
-    },
+    session: ({ session, token }) => ({
+      ...session,
+      user: (({ name, email, picture, sub }) => ({
+        name,
+        email,
+        picture,
+        id: sub,
+      }))(token),
+    }),
   },
   session: {
     strategy: "jwt",
@@ -78,6 +76,4 @@ export const authOptions: NextAuthOptions = {
 export const getServerAuthSession = (ctx: {
   req: GetServerSidePropsContext["req"];
   res: GetServerSidePropsContext["res"];
-}) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
-};
+}) => getServerSession(ctx.req, ctx.res, authOptions);

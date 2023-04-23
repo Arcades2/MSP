@@ -21,6 +21,9 @@ export const postRouter = createTRPCRouter({
           },
         ],
       },
+      include: {
+        user: true,
+      },
     })
   ),
 });

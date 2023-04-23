@@ -2,18 +2,13 @@ import { type GetServerSideProps, type NextPage } from "next";
 import { getServerAuthSession } from "~/server/auth";
 import { getServerSideHelpers } from "~/server/helpers/ssHelpers";
 import { api } from "~/utils/api";
+import MusicPost from "~/components/MusicPost";
+import invariant from "tiny-invariant";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
 
-  if (!session) {
-    return {
-      redirect: {
-        destination: "/",
-        permanent: false,
-      },
-    };
-  }
+  invariant(session, "Session should be defined");
 
   const ssr = getServerSideHelpers(session);
 
@@ -26,7 +21,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 
-const FeedPage: NextPage = function FeedPage() {
+const FeedPage: NextPage = () => {
   const feed = api.post.getFollowingPosts.useQuery();
 
   if (feed.status === "error") {
@@ -34,14 +29,20 @@ const FeedPage: NextPage = function FeedPage() {
   }
 
   return (
-    <main>
-      <h1>Feed</h1>
-      <ul>
+    <div className="mx-auto min-h-screen max-w-[700px] border-x">
+      <div className="p-2">
+        <h1>Feed</h1>
+      </div>
+      <div className="my-4 w-full border-t" />
+      <div>
+        <h2>Following</h2>
         {feed.data?.map((post) => (
-          <li key={post.id}>{post.description}</li>
+          <div key={post.id} className="border-y">
+            <MusicPost post={post} />
+          </div>
         ))}
-      </ul>
-    </main>
+      </div>
+    </div>
   );
 };
 

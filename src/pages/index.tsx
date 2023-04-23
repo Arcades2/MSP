@@ -3,7 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-const Home: NextPage = function HomePage() {
+const Home: NextPage = () => {
   const session = useSession();
 
   return (
