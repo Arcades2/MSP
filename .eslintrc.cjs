@@ -38,6 +38,16 @@ const config = {
     "@typescript-eslint/no-unused-vars": "error",
     "react/react-in-jsx-scope": "off",
     "import/prefer-default-export": "off",
+    "no-restricted-exports": [
+      "error",
+      {
+        restrictDefaultExports: { defaultFrom: false },
+      },
+    ],
+    "react/jsx-props-no-spreading": "off",
+    "react/function-component-definition": "off",
+    "react/prop-types": "off",
+    "import/no-extraneous-dependencies": "off",
   },
 };
 
