@@ -3,15 +3,16 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import Layout from "~/components/Layout";
 import { useRouter } from "next/router";
-import localFont from "next/font/local";
+import { Poppins } from "next/font/google";
 
 import { api } from "~/utils/api";
 
 import "~/styles/globals.css";
 
-const firaCode = localFont({
-  src: "../styles/Fira_code/woff2/FiraCode-Regular.woff2",
-  variable: "--font-fira-code",
+const poppins = Poppins({
+  weight: "400",
+  subsets: ["latin-ext"],
+  variable: "--font-poppins",
 });
 
 const MyApp: AppType<{ session: Session | null }> = ({
@@ -31,7 +32,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
   }
 
   return (
-    <div className={`${firaCode.variable} font-sans`}>
+    <div className={`${poppins.variable} font-sans`}>
       <SessionProvider session={session}>{content}</SessionProvider>
     </div>
   );

@@ -30,17 +30,20 @@ const FeedPage: NextPage = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[700px] border-x">
+    <div className="mx-auto min-h-screen max-w-[700px] border-x border-neutral-400 border-opacity-25">
       <div className="p-2">
         <h1>Feed</h1>
       </div>
-      <div className="my-4 w-full border-t" />
+      <div className="my-4 w-full border-t border-neutral-400 border-opacity-25" />
       <div className="p-2">
         <CreatePostForm />
       </div>
       <div>
         {feed.data?.map((post) => (
-          <div key={post.id} className="border-y">
+          <div
+            key={post.id}
+            className="border-y border-neutral-400 border-opacity-25"
+          >
             <MusicPost post={post} />
           </div>
         ))}

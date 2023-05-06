@@ -4,7 +4,7 @@ type LayoutProps = {
 
 function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1c1f42] to-[#20152e] text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#34334D] text-white">
       <main>{children}</main>
     </div>
   );

@@ -48,6 +48,8 @@ const config = {
     "react/function-component-definition": "off",
     "react/prop-types": "off",
     "import/no-extraneous-dependencies": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    "react/require-default-props": "off",
   },
 };
 

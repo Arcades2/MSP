@@ -24,8 +24,11 @@ const MusicPost = ({ post }: MusicPostProps) => {
 
   return (
     <div className="flex flex-col gap-4 p-2">
-      <Avatar user={post.user} />
-      <p>{post.createdAt.toLocaleDateString("fr-fr")}</p>
+      <div className="mb-4 flex items-center gap-2">
+        <Avatar user={post.user} />
+        <span className="text-gray-400">·</span>
+        <LocalDate date={post.createdAt} className="text-sm text-gray-400" />
+      </div>
       <p>{post.description}</p>
       <ReactPlayer
         light
@@ -47,5 +50,14 @@ const MusicPost = ({ post }: MusicPostProps) => {
     </div>
   );
 };
+
+type LocalDateProps = {
+  date: Date;
+  className?: string;
+};
+
+function LocalDate({ date, className }: LocalDateProps) {
+  return <div className={className}>{date.toLocaleDateString("fr-fr")}</div>;
+}
 
 export default MusicPost;
