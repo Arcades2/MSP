@@ -13,7 +13,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   const ssr = getServerSideHelpers(session);
 
-  await ssr.post.getFollowingPosts.prefetch();
+  await Promise.all([
+    ssr.post.getFollowingPosts.prefetch(),
+    ssr.reaction.getReactionTypes.prefetch(undefined),
+  ]);
 
   return {
     props: {

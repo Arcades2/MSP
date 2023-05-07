@@ -27,6 +27,7 @@ export const postRouter = createTRPCRouter({
         user: true,
         reactions: {
           select: {
+            userId: true,
             type: {
               select: {
                 value: true,
@@ -42,7 +43,12 @@ export const postRouter = createTRPCRouter({
 
     return posts.map((post) => ({
       ...post,
-      reactions: groupReactions(post.reactions),
+      reactions: {
+        global: groupReactions(post.reactions),
+        myReaction: post.reactions.find(
+          (reaction) => reaction.userId === ctx.session.user.id
+        )?.type.value,
+      },
     }));
   }),
   createPost: protectedProcedure

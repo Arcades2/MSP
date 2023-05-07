@@ -25,7 +25,12 @@ export const reactionRouter = createTRPCRouter({
         },
       });
 
-      return groupReactions(reactions);
+      return {
+        global: groupReactions(reactions),
+        myReaction: reactions.find(
+          (reaction) => reaction.userId === ctx.session.user.id
+        )?.type.value,
+      };
     }),
   addReaction: protectedProcedure
     .input(
@@ -52,6 +57,21 @@ export const reactionRouter = createTRPCRouter({
               value: input.value,
             },
           },
+        },
+      })
+    ),
+  removeReaction: protectedProcedure
+    .input(
+      z.object({
+        postId: z.string().nonempty(),
+        value: z.string().nonempty(),
+      })
+    )
+    .mutation(({ ctx, input }) =>
+      ctx.prisma.reaction.deleteMany({
+        where: {
+          postId: input.postId,
+          userId: ctx.session.user.id,
         },
       })
     ),

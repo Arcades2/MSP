@@ -36,6 +36,8 @@ model Reaction {
   updatedAt DateTime     @updatedAt
   type      ReactionType @relation(fields: [typeId], references: [id])
   typeId    String
+
+  @@unique([userId, postId], name: "Reaction_userId_postId_unique")
 }
 
 model ReactionType {

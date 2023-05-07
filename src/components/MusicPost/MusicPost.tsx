@@ -4,6 +4,7 @@ import { type RouterOutputs } from "~/utils/api";
 import Avatar from "~/components/Avatar";
 import { usePlayersActions, usePlayerState } from "~/stores/players";
 import { api } from "~/utils/api";
+import classnames from "classnames";
 
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
@@ -63,13 +64,17 @@ function LocalDate({ date, className }: LocalDateProps) {
 }
 
 type ReactionsProps = {
-  reactions: Record<string, number>;
+  reactions: {
+    global: Record<string, number>;
+    myReaction?: string;
+  };
   postId: string;
 };
 
 function Reactions({ reactions, postId }: ReactionsProps) {
   const reactionTypesQuery = api.reaction.getReactionTypes.useQuery(undefined, {
     select: (data) => data.map((type) => type.value),
+    staleTime: Infinity,
   });
   const reactionsQuery = api.reaction.getPostReactions.useQuery(postId, {
     initialData: reactions,
@@ -77,15 +82,44 @@ function Reactions({ reactions, postId }: ReactionsProps) {
   });
 
   const utils = api.useContext();
-  const reactionMutation = api.reaction.addReaction.useMutation({
+  const addReactionMutation = api.reaction.addReaction.useMutation({
     onMutate: async (newReaction) => {
       await utils.reaction.getPostReactions.cancel();
 
       const prevReactions = utils.reaction.getPostReactions.getData();
 
-      utils.reaction.getPostReactions.setData(postId, (prev = {}) => ({
-        ...prev,
-        [newReaction.value]: (prev[newReaction.value] ?? 0) + 1,
+      utils.reaction.getPostReactions.setData(postId, (prev) => ({
+        global: {
+          [newReaction.value]: (prev?.global[newReaction.value] ?? 0) + 1,
+        },
+        myReaction: newReaction.value,
+      }));
+
+      return {
+        prevReactions,
+      };
+    },
+    onError: (_, __, context) => {
+      if (context) {
+        utils.reaction.getPostReactions.setData(postId, context.prevReactions);
+      }
+    },
+    onSettled: async () => {
+      await utils.reaction.getPostReactions.invalidate();
+    },
+  });
+
+  const removeReactionMutation = api.reaction.removeReaction.useMutation({
+    onMutate: async (newReaction) => {
+      await utils.reaction.getPostReactions.cancel();
+
+      const prevReactions = utils.reaction.getPostReactions.getData();
+
+      utils.reaction.getPostReactions.setData(postId, (prev) => ({
+        global: {
+          [newReaction.value]: (prev?.global[newReaction.value] ?? 0) - 1,
+        },
+        myReaction: undefined,
       }));
 
       return {
@@ -108,22 +142,41 @@ function Reactions({ reactions, postId }: ReactionsProps) {
   )
     return null;
 
+  const { myReaction } = reactionsQuery.data;
+
   return (
     <div className="flex items-center gap-8">
-      {reactionTypesQuery.data.map((reactionType) => (
-        <div key={reactionType} className="flex items-center gap-2">
-          <button
-            type="button"
-            className="rounded-full p-2 hover:bg-neutral-400 hover:bg-opacity-10 active:bg-opacity-20"
-            onClick={() =>
-              reactionMutation.mutate({ postId, value: reactionType })
-            }
-          >
-            {reactionType}
-          </button>
-          <span>{reactionsQuery.data[reactionType] ?? 0}</span>
-        </div>
-      ))}
+      {reactionTypesQuery.data.map((reactionType) => {
+        const isDisabled = !!myReaction && myReaction !== reactionType;
+        return (
+          <div key={reactionType} className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={isDisabled}
+              className={classnames(
+                "rounded-full p-2",
+                myReaction === reactionType && "bg-neutral-400 bg-opacity-10",
+                isDisabled
+                  ? "opacity-50 grayscale filter"
+                  : "hover:bg-neutral-400 hover:bg-opacity-10 active:bg-opacity-20"
+              )}
+              onClick={() => {
+                if (myReaction) {
+                  removeReactionMutation.mutate({
+                    postId,
+                    value: myReaction,
+                  });
+                } else {
+                  addReactionMutation.mutate({ postId, value: reactionType });
+                }
+              }}
+            >
+              {reactionType}
+            </button>
+            <span>{reactionsQuery.data.global[reactionType] ?? 0}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
