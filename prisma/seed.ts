@@ -46,19 +46,35 @@ async function main() {
       user: {
         connect: { email: "alice.test@test.com" },
       },
-      url: "https://www.youtube.com/watch?v=4GmLoVGmgDw&list=LL&index=3",
+      url: "https://www.youtube.com/watch?v=4GmLoVGmgDw",
     },
     {
       description: "This is Bob post",
       user: {
         connect: { email: "bob.test@test.com" },
       },
-      url: "https://www.youtube.com/watch?v=UGeJoaBYg04&list=LL&index=3",
+      url: "https://www.youtube.com/watch?v=UGeJoaBYg04",
     },
   ];
 
   for (const post of posts) {
     await prisma.post.create({ data: post });
+  }
+
+  const reactionTypes: Prisma.ReactionTypeCreateInput[] = [
+    {
+      value: "💖",
+    },
+    {
+      value: "💥",
+    },
+    {
+      value: "💩",
+    },
+  ];
+
+  for (const reactionType of reactionTypes) {
+    await prisma.reactionType.create({ data: reactionType });
   }
 }
 
