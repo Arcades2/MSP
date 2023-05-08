@@ -1,6 +1,6 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { z } from "zod";
-import groupReactions from "~/server/helpers/groupReactions";
+import formatReactions from "~/server/helpers/formatReactions";
 
 export const reactionRouter = createTRPCRouter({
   getReactionTypes: protectedProcedure.query(({ ctx }) =>
@@ -20,17 +20,24 @@ export const reactionRouter = createTRPCRouter({
         where: {
           postId: input,
         },
-        include: {
-          type: true,
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+              name: true,
+            },
+          },
+          type: {
+            select: {
+              value: true,
+            },
+          },
         },
       });
 
-      return {
-        global: groupReactions(reactions),
-        myReaction: reactions.find(
-          (reaction) => reaction.userId === ctx.session.user.id
-        )?.type.value,
-      };
+      return formatReactions(reactions, ctx.session.user.id);
     }),
   addReaction: protectedProcedure
     .input(
@@ -63,14 +70,14 @@ export const reactionRouter = createTRPCRouter({
   removeReaction: protectedProcedure
     .input(
       z.object({
-        postId: z.string().nonempty(),
+        reactionId: z.string().nonempty(),
         value: z.string().nonempty(),
       })
     )
     .mutation(({ ctx, input }) =>
       ctx.prisma.reaction.deleteMany({
         where: {
-          postId: input.postId,
+          id: input.reactionId,
           userId: ctx.session.user.id,
         },
       })

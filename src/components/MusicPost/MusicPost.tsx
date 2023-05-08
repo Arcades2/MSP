@@ -5,6 +5,7 @@ import Avatar from "~/components/Avatar";
 import { usePlayersActions, usePlayerState } from "~/stores/players";
 import { api } from "~/utils/api";
 import classnames from "classnames";
+import { useSession } from "next-auth/react";
 
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
@@ -64,14 +65,14 @@ function LocalDate({ date, className }: LocalDateProps) {
 }
 
 type ReactionsProps = {
-  reactions: {
-    global: Record<string, number>;
-    myReaction?: string;
-  };
+  reactions: RouterOutputs["reaction"]["getPostReactions"];
   postId: string;
 };
 
 function Reactions({ reactions, postId }: ReactionsProps) {
+  const session = useSession();
+  const me = session.data?.user;
+
   const reactionTypesQuery = api.reaction.getReactionTypes.useQuery(undefined, {
     select: (data) => data.map((type) => type.value),
     staleTime: Infinity,
@@ -90,9 +91,29 @@ function Reactions({ reactions, postId }: ReactionsProps) {
 
       utils.reaction.getPostReactions.setData(postId, (prev) => ({
         global: {
-          [newReaction.value]: (prev?.global[newReaction.value] ?? 0) + 1,
+          ...prev?.global,
+          [newReaction.value]: [
+            ...(prev?.global[newReaction.value] ?? []),
+            {
+              id: "tempId",
+              type: newReaction,
+              user: {
+                id: "tempId",
+                name: "tempName",
+                image: "tempImage",
+              },
+            },
+          ],
         },
-        myReaction: newReaction.value,
+        myReaction: {
+          id: "tempId",
+          type: newReaction,
+          user: {
+            id: me?.id ?? "tempId",
+            name: me?.name ?? "tempName",
+            image: me?.image ?? "tempImage",
+          },
+        },
       }));
 
       return {
@@ -105,7 +126,7 @@ function Reactions({ reactions, postId }: ReactionsProps) {
       }
     },
     onSettled: async () => {
-      await utils.reaction.getPostReactions.invalidate();
+      await utils.reaction.getPostReactions.invalidate(postId);
     },
   });
 
@@ -117,7 +138,11 @@ function Reactions({ reactions, postId }: ReactionsProps) {
 
       utils.reaction.getPostReactions.setData(postId, (prev) => ({
         global: {
-          [newReaction.value]: (prev?.global[newReaction.value] ?? 0) - 1,
+          ...prev?.global,
+          [newReaction.value]:
+            prev?.global[newReaction.value]?.filter(
+              (reaction) => reaction.id !== newReaction.reactionId
+            ) ?? [],
         },
         myReaction: undefined,
       }));
@@ -132,7 +157,7 @@ function Reactions({ reactions, postId }: ReactionsProps) {
       }
     },
     onSettled: async () => {
-      await utils.reaction.getPostReactions.invalidate();
+      await utils.reaction.getPostReactions.invalidate(postId);
     },
   });
 
@@ -147,7 +172,8 @@ function Reactions({ reactions, postId }: ReactionsProps) {
   return (
     <div className="flex items-center gap-8">
       {reactionTypesQuery.data.map((reactionType) => {
-        const isDisabled = !!myReaction && myReaction !== reactionType;
+        const isDisabled =
+          !!myReaction && myReaction?.type.value !== reactionType;
         return (
           <div key={reactionType} className="flex items-center gap-2">
             <button
@@ -155,7 +181,8 @@ function Reactions({ reactions, postId }: ReactionsProps) {
               disabled={isDisabled}
               className={classnames(
                 "rounded-full p-2",
-                myReaction === reactionType && "bg-neutral-400 bg-opacity-10",
+                myReaction?.type.value === reactionType &&
+                  "bg-neutral-400 bg-opacity-10",
                 isDisabled
                   ? "opacity-50 grayscale filter"
                   : "hover:bg-neutral-400 hover:bg-opacity-10 active:bg-opacity-20"
@@ -163,8 +190,8 @@ function Reactions({ reactions, postId }: ReactionsProps) {
               onClick={() => {
                 if (myReaction) {
                   removeReactionMutation.mutate({
-                    postId,
-                    value: myReaction,
+                    reactionId: myReaction.id,
+                    value: myReaction.type.value,
                   });
                 } else {
                   addReactionMutation.mutate({ postId, value: reactionType });
@@ -173,7 +200,7 @@ function Reactions({ reactions, postId }: ReactionsProps) {
             >
               {reactionType}
             </button>
-            <span>{reactionsQuery.data.global[reactionType] ?? 0}</span>
+            <span>{reactionsQuery.data.global[reactionType]?.length ?? 0}</span>
           </div>
         );
       })}

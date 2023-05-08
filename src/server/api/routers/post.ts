@@ -1,6 +1,6 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createPostInput } from "~/common/validation/post";
-import groupReactions from "~/server/helpers/groupReactions";
+import formatReactions from "~/server/helpers/formatReactions";
 
 export const postRouter = createTRPCRouter({
   getFollowingPosts: protectedProcedure.query(async ({ ctx }) => {
@@ -27,7 +27,14 @@ export const postRouter = createTRPCRouter({
         user: true,
         reactions: {
           select: {
-            userId: true,
+            id: true,
+            user: {
+              select: {
+                id: true,
+                image: true,
+                name: true,
+              },
+            },
             type: {
               select: {
                 value: true,
@@ -43,12 +50,7 @@ export const postRouter = createTRPCRouter({
 
     return posts.map((post) => ({
       ...post,
-      reactions: {
-        global: groupReactions(post.reactions),
-        myReaction: post.reactions.find(
-          (reaction) => reaction.userId === ctx.session.user.id
-        )?.type.value,
-      },
+      reactions: formatReactions(post.reactions, ctx.session.user.id),
     }));
   }),
   createPost: protectedProcedure
