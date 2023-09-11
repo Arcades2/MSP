@@ -1,9 +1,8 @@
 import { type AppType } from "next/app";
 import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import Layout from "~/components/Layout";
-import { useRouter } from "next/router";
 import { Poppins } from "next/font/google";
+import { ThemeProvider } from "~/components/ThemeProvider";
 
 import { api } from "~/utils/api";
 
@@ -19,22 +18,14 @@ const MyApp: AppType<{ session: Session | null }> = ({
   Component,
   pageProps: { session, ...pageProps },
 }) => {
-  const path = useRouter().pathname;
-
-  let content = <Component {...pageProps} />;
-
-  if (path !== "/") {
-    content = (
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    );
-  }
+  const content = <Component {...pageProps} />;
 
   return (
-    <div className={`${poppins.variable} font-sans`}>
-      <SessionProvider session={session}>{content}</SessionProvider>
-    </div>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <div className={`${poppins.variable} font-sans`}>
+        <SessionProvider session={session}>{content}</SessionProvider>
+      </div>
+    </ThemeProvider>
   );
 };
 

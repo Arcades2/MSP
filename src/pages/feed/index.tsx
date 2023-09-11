@@ -15,7 +15,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   await Promise.all([
     ssr.post.getFollowingPosts.prefetch(),
-    ssr.reaction.getReactionTypes.prefetch(undefined),
+    ssr.reaction.getReactionTypes.prefetch(),
   ]);
 
   return {

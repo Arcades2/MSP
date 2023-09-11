@@ -1,76 +1,77 @@
 import React from "react";
-import invariant from "tiny-invariant";
 import { createPostInput } from "~/common/validation/post";
 import { api } from "~/utils/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
 
 const CreatePostForm = () => {
-  const [errors, setErrors] = React.useState<{
-    url?: string;
-  }>({});
-  const formRef = React.useRef<HTMLFormElement>(null);
+  const form = useForm<z.infer<typeof createPostInput>>({
+    resolver: zodResolver(createPostInput),
+    defaultValues: {
+      description: "",
+      url: "",
+    },
+  });
 
   const utils = api.useContext();
-
   const createPostMutation = api.post.createPost.useMutation({
     onSettled: async () => {
       await utils.post.getFollowingPosts.invalidate();
     },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    invariant(formRef.current, "Form should be defined");
-
-    const data = new FormData(formRef.current);
-
-    const parsing = createPostInput.safeParse(
-      Object.fromEntries(data.entries())
-    );
-
-    if (!parsing.success) {
-      setErrors({
-        url: parsing.error.issues.find((issue) => issue.path[0] === "url")
-          ?.message,
-      });
-      return;
-    }
-
-    createPostMutation.mutate(parsing.data, {
+  const onSubmit = (values: z.infer<typeof createPostInput>) => {
+    createPostMutation.mutate(values, {
       onSuccess: () => {
-        invariant(formRef.current, "Form should be defined");
-        formRef.current.reset();
-        setErrors({
-          url: undefined,
-        });
+        form.reset();
       },
     });
   };
 
   return (
-    <form ref={formRef} className="flex flex-col gap-2" onSubmit={handleSubmit}>
-      <textarea
-        id="description"
-        name="description"
-        className="rounded-sm p-2 text-black"
-        rows={3}
-      />
-      <input
-        id="url"
-        name="url"
-        type="text"
-        className="rounded-sm p-2 text-black"
-        placeholder="YouTube or SoundCloud url"
-      />
-      {errors.url && <p className="text-sm text-red-500">{errors.url}</p>}
-      <button
-        type="submit"
-        className="bg-indigo-600 p-2"
-        disabled={createPostMutation.isLoading}
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-2"
       >
-        Create Post
-      </button>
-    </form>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Textarea {...field} rows={3} placeholder="Description..." />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Input placeholder="YouTube or SoundCloud url..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Create Post</Button>
+      </form>
+    </Form>
   );
 };
 

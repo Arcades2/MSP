@@ -50,6 +50,15 @@ const config = {
     "import/no-extraneous-dependencies": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "react/require-default-props": "off",
+    "no-void": "off",
+    "@typescript-eslint/no-misused-promises": [
+      2,
+      {
+        checksVoidReturn: {
+          attributes: false,
+        },
+      },
+    ],
   },
 };
 
