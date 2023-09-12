@@ -16,9 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   const ssr = getServerSideHelpers(session);
 
-  await ssr.post.infiniteFollowedPosts.prefetchInfinite({
-    limit: 1,
-  });
+  await ssr.post.infiniteFollowedPosts.prefetchInfinite({});
 
   return {
     props: {
@@ -29,12 +27,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
 const FeedPage: NextPage = () => {
   const feed = api.post.infiniteFollowedPosts.useInfiniteQuery(
-    {
-      limit: 1,
-    },
+    {},
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       staleTime: 30 * 1000,
+      refetchInterval: 30 * 1000,
     }
   );
 
@@ -79,7 +76,7 @@ const FeedPage: NextPage = () => {
           >
             {(() => {
               if (feed.isFetchingNextPage) return "Loading more...";
-              if (feed.hasNextPage) return "Load newer";
+              if (feed.hasNextPage) return "Load older";
               return "Nothing more to load";
             })()}
           </Button>

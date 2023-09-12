@@ -7,17 +7,15 @@ export const postRouter = createTRPCRouter({
   infiniteFollowedPosts: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(100).nullish(),
         cursor: z.string().nullish(),
       })
     )
     .query(async ({ ctx, input }) => {
-      // const { limit = 50, cursor } = input;
-      const limit = input.limit ?? 50;
       const { cursor } = input;
+      const LIMIT = 5;
 
       const posts = await ctx.prisma.post.findMany({
-        take: limit + 1,
+        take: LIMIT + 1,
         where: {
           OR: [
             {
@@ -65,7 +63,7 @@ export const postRouter = createTRPCRouter({
 
       let nextCursor: typeof cursor;
 
-      if (posts.length > limit) {
+      if (posts.length > LIMIT) {
         const nextPost = posts.pop();
         nextCursor = nextPost?.id;
       }
