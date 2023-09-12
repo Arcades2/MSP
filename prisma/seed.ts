@@ -60,22 +60,6 @@ async function main() {
   for (const post of posts) {
     await prisma.post.create({ data: post });
   }
-
-  const reactionTypes: Prisma.ReactionTypeCreateInput[] = [
-    {
-      value: "💖",
-    },
-    {
-      value: "💥",
-    },
-    {
-      value: "💩",
-    },
-  ];
-
-  for (const reactionType of reactionTypes) {
-    await prisma.reactionType.create({ data: reactionType });
-  }
 }
 
 main()

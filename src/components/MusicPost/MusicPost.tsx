@@ -5,6 +5,7 @@ import { usePlayersActions, usePlayerState } from "~/stores/players";
 import { Avatar } from "~/components/ui/avatar";
 import LocalDate from "~/components/LocalDate";
 import Reactions from "~/components/Reactions";
+import LikeButton from "~/components/LikeButton/LikeButton";
 
 const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
@@ -49,7 +50,8 @@ const MusicPost = ({ post }: MusicPostProps) => {
           playersActions.pausePlayer(post.id);
         }}
       />
-      <Reactions reactions={post.reactions} postId={post.id} />
+      {/* <Reactions reactions={post.reactions} postId={post.id} /> */}
+      <LikeButton postId={post.id} liked={post.liked} likes={post.likes} />
     </div>
   );
 };

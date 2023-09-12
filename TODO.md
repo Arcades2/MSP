@@ -1,0 +1,1 @@
+- useInfiniteQuery pour récupérer les posts + refetchInterval ?
