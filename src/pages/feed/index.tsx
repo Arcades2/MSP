@@ -5,6 +5,9 @@ import { api } from "~/utils/api";
 import MusicPost from "~/components/MusicPost";
 import invariant from "tiny-invariant";
 import CreatePostForm from "~/components/CreatePostForm";
+import { useInView } from "react-intersection-observer";
+import { Button } from "~/components/ui/button";
+import React from "react";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -13,10 +16,9 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   const ssr = getServerSideHelpers(session);
 
-  await Promise.all([
-    ssr.post.getFollowingPosts.prefetch(),
-    ssr.reaction.getReactionTypes.prefetch(),
-  ]);
+  await ssr.post.infiniteFollowedPosts.prefetchInfinite({
+    limit: 1,
+  });
 
   return {
     props: {
@@ -26,7 +28,24 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 };
 
 const FeedPage: NextPage = () => {
-  const feed = api.post.getFollowingPosts.useQuery();
+  const feed = api.post.infiniteFollowedPosts.useInfiniteQuery(
+    {
+      limit: 1,
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      staleTime: 30 * 1000,
+    }
+  );
+
+  const { ref, inView } = useInView();
+  const { fetchNextPage } = feed;
+
+  React.useEffect(() => {
+    if (inView) {
+      void fetchNextPage();
+    }
+  }, [inView, fetchNextPage]);
 
   if (feed.status === "error") {
     return <div>{feed.error.message}</div>;
@@ -42,14 +61,29 @@ const FeedPage: NextPage = () => {
         <CreatePostForm />
       </div>
       <div>
-        {feed.data?.map((post) => (
-          <div
-            key={post.id}
-            className="border-y border-neutral-400 border-opacity-25"
+        {feed.data?.pages
+          .flatMap((page) => page.posts)
+          .map((post) => (
+            <div
+              key={post.id}
+              className="border-y border-neutral-400 border-opacity-25"
+            >
+              <MusicPost post={post} />
+            </div>
+          ))}
+        <div className="my-8 text-center">
+          <Button
+            ref={ref}
+            onClick={() => feed.fetchNextPage()}
+            disabled={!feed.hasNextPage || feed.isFetchingNextPage}
           >
-            <MusicPost post={post} />
-          </div>
-        ))}
+            {(() => {
+              if (feed.isFetchingNextPage) return "Loading more...";
+              if (feed.hasNextPage) return "Load newer";
+              return "Nothing more to load";
+            })()}
+          </Button>
+        </div>
       </div>
     </div>
   );

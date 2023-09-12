@@ -4,13 +4,16 @@ import { type RouterOutputs } from "~/utils/api";
 import { usePlayersActions, usePlayerState } from "~/stores/players";
 import { Avatar } from "~/components/ui/avatar";
 import LocalDate from "~/components/LocalDate";
-import Reactions from "~/components/Reactions";
 import LikeButton from "~/components/LikeButton/LikeButton";
+import { Skeleton } from "~/components/ui/skeleton";
 
-const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
+const ReactPlayer = dynamic(() => import("react-player"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[360px] w-full" />,
+});
 
 type MusicPostProps = {
-  post: RouterOutputs["post"]["getFollowingPosts"][number];
+  post: RouterOutputs["post"]["infiniteFollowedPosts"]["posts"][number];
 };
 
 const MusicPost = ({ post }: MusicPostProps) => {
@@ -33,24 +36,25 @@ const MusicPost = ({ post }: MusicPostProps) => {
         <LocalDate date={post.createdAt} className="text-sm text-gray-400" />
       </div>
       <p>{post.description}</p>
-      <ReactPlayer
-        light
-        url={post.url}
-        controls
-        width="100%"
-        playing={playerState.playing}
-        style={{
-          borderRadius: "0.5rem",
-          overflow: "hidden",
-        }}
-        onPlay={() => {
-          playersActions.playPlayer(post.id);
-        }}
-        onPause={() => {
-          playersActions.pausePlayer(post.id);
-        }}
-      />
-      {/* <Reactions reactions={post.reactions} postId={post.id} /> */}
+      <div className="h-[360px] w-full">
+        <ReactPlayer
+          light
+          url={post.url}
+          controls
+          width="100%"
+          playing={playerState.playing}
+          style={{
+            borderRadius: "0.5rem",
+            overflow: "hidden",
+          }}
+          onPlay={() => {
+            playersActions.playPlayer(post.id);
+          }}
+          onPause={() => {
+            playersActions.pausePlayer(post.id);
+          }}
+        />
+      </div>
       <LikeButton postId={post.id} liked={post.liked} likes={post.likes} />
     </div>
   );
