@@ -1,6 +1,6 @@
 import React from "react";
 import { createPostInput } from "~/common/validation/post";
-import { api } from "~/utils/api";
+import { type RouterInputs, api } from "~/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
@@ -31,7 +31,7 @@ const CreatePostForm = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof createPostInput>) => {
+  const onSubmit = (values: RouterInputs["post"]["createPost"]) => {
     createPostMutation.mutate(values, {
       onSuccess: () => {
         form.reset();
