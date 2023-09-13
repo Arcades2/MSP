@@ -27,7 +27,7 @@ const CreatePostForm = () => {
   const utils = api.useContext();
   const createPostMutation = api.post.createPost.useMutation({
     onSettled: async () => {
-      await utils.post.getFollowingPosts.invalidate();
+      await utils.post.infiniteFollowedPosts.invalidate();
     },
   });
 
