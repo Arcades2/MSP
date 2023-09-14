@@ -3,6 +3,16 @@ import { createPostInput } from "~/common/validation/post";
 import { z } from "zod";
 // import formatReactions from "~/server/helpers/formatReactions";
 
+const likeSelect = {
+  id: true,
+  user: {
+    select: {
+      id: true,
+      image: true,
+      name: true,
+    },
+  },
+};
 export const postRouter = createTRPCRouter({
   infiniteFollowedPosts: protectedProcedure
     .input(
@@ -44,16 +54,7 @@ export const postRouter = createTRPCRouter({
             },
           },
           likes: {
-            select: {
-              id: true,
-              user: {
-                select: {
-                  id: true,
-                  image: true,
-                  name: true,
-                },
-              },
-            },
+            select: likeSelect,
           },
         },
         orderBy: {
@@ -69,68 +70,87 @@ export const postRouter = createTRPCRouter({
       }
 
       return {
-        posts: posts.map((post) => ({
-          ...post,
-          likes: post.likes.length,
-          liked: !!post.likes.find(
-            (like) => like.user.id === ctx.session.user.id
-          ),
-        })),
+        posts,
         nextCursor,
       };
     }),
-  getFollowingPosts: protectedProcedure.query(async ({ ctx }) => {
-    const posts = await ctx.prisma.post.findMany({
-      where: {
-        OR: [
-          {
-            user: {
-              followedBy: {
-                some: {
-                  id: ctx.session.user.id,
-                },
-              },
+  getPost: protectedProcedure
+    .input(
+      z.object({
+        postId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) =>
+      ctx.prisma.post.findUnique({
+        where: {
+          id: input.postId,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
             },
           },
-          {
-            user: {
-              id: ctx.session.user.id,
-            },
-          },
-        ],
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
+          likes: {
+            select: likeSelect,
           },
         },
-        likes: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                id: true,
-                image: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+      })
+    ),
+  // getFollowingPosts: protectedProcedure.query(async ({ ctx }) => {
+  //   const posts = await ctx.prisma.post.findMany({
+  //     where: {
+  //       OR: [
+  //         {
+  //           user: {
+  //             followedBy: {
+  //               some: {
+  //                 id: ctx.session.user.id,
+  //               },
+  //             },
+  //           },
+  //         },
+  //         {
+  //           user: {
+  //             id: ctx.session.user.id,
+  //           },
+  //         },
+  //       ],
+  //     },
+  //     include: {
+  //       user: {
+  //         select: {
+  //           id: true,
+  //           name: true,
+  //           image: true,
+  //         },
+  //       },
+  //       likes: {
+  //         select: {
+  //           id: true,
+  //           user: {
+  //             select: {
+  //               id: true,
+  //               image: true,
+  //               name: true,
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //     orderBy: {
+  //       createdAt: "desc",
+  //     },
+  //   });
 
-    return posts.map((post) => ({
-      ...post,
-      likes: post.likes.length,
-      liked: !!post.likes.find((like) => like.user.id === ctx.session.user.id),
-    }));
-  }),
+  //   return posts.map((post) => ({
+  //     ...post,
+  //     likes: post.likes.length,
+  //     liked: !!post.likes.find((like) => like.user.id === ctx.session.user.id),
+  //   }));
+  // }),
   createPost: protectedProcedure
     .input(createPostInput)
     .mutation(({ ctx, input }) =>

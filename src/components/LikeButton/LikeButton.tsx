@@ -1,15 +1,26 @@
 import { Button } from "~/components/ui/button";
 import { PiHeartStraightBold, PiHeartStraightFill } from "react-icons/pi";
 import { api, type RouterOutputs } from "~/utils/api";
+import { useSession } from "next-auth/react";
 
 export type LikeButtonProps = {
   postId: string;
-  likes: number;
-  liked: boolean;
+  likes: Array<{
+    id: string;
+    user: {
+      id: string;
+      image?: string | null;
+      name: string;
+    };
+  }>;
 };
 
-export default function LikeButton({ postId, likes, liked }: LikeButtonProps) {
+export default function LikeButton({ postId, likes }: LikeButtonProps) {
+  const session = useSession();
+  const me = session.data?.user;
+
   const utils = api.useContext();
+  const liked = !!likes.find((like) => like.user.id === me?.id);
 
   const likePostMutation = api.like.likePost.useMutation({
     onMutate: async (variable) => {
@@ -33,7 +44,19 @@ export default function LikeButton({ postId, likes, liked }: LikeButtonProps) {
                 return {
                   ...post,
                   liked: variable.like,
-                  likes: variable.like ? post.likes + 1 : post.likes - 1,
+                  likes: variable.like
+                    ? [
+                        ...post.likes,
+                        {
+                          id: "tempId",
+                          user: {
+                            id: me?.id ?? "",
+                            image: me?.image ?? null,
+                            name: me?.name ?? "",
+                          },
+                        },
+                      ]
+                    : post.likes.filter((like) => like.user.id !== me?.id),
                 };
               }
               return post;
@@ -83,7 +106,7 @@ export default function LikeButton({ postId, likes, liked }: LikeButtonProps) {
       >
         {liked ? <PiHeartStraightFill /> : <PiHeartStraightBold />}
       </Button>
-      <span className="text-lg">{likes}</span>
+      <span className="text-lg">{likes.length}</span>
     </div>
   );
 }

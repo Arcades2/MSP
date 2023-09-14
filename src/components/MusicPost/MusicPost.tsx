@@ -6,6 +6,7 @@ import { Avatar } from "~/components/ui/avatar";
 import LocalDate from "~/components/LocalDate";
 import LikeButton from "~/components/LikeButton/LikeButton";
 import { Skeleton } from "~/components/ui/skeleton";
+import Link from "next/link";
 
 const ReactPlayer = dynamic(() => import("react-player"), {
   ssr: false,
@@ -29,7 +30,7 @@ const MusicPost = ({ post }: MusicPostProps) => {
   }, [playersActions, post.id]);
 
   return (
-    <div className="flex flex-col gap-4 p-2">
+    <Link href={`/posts/${post.id}`} className="flex flex-col gap-4 p-2">
       <div className="mb-4 flex items-center gap-2">
         <Avatar image={post.user.image} name={post.user.name} />
         <span className="text-gray-400">·</span>
@@ -55,8 +56,8 @@ const MusicPost = ({ post }: MusicPostProps) => {
           }}
         />
       </div>
-      <LikeButton postId={post.id} liked={post.liked} likes={post.likes} />
-    </div>
+      <LikeButton postId={post.id} likes={post.likes} />
+    </Link>
   );
 };
 

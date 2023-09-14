@@ -1,4 +1,4 @@
-import { type GetServerSideProps, type NextPage } from "next";
+import { type GetServerSideProps } from "next";
 import { getServerAuthSession } from "~/server/auth";
 import { getServerSideHelpers } from "~/server/helpers/ssHelpers";
 import { api } from "~/utils/api";
@@ -8,6 +8,8 @@ import CreatePostForm from "~/components/CreatePostForm";
 import { useInView } from "react-intersection-observer";
 import { Button } from "~/components/ui/button";
 import React from "react";
+import { type NextPageWithLayout } from "~/pages/_app";
+import AppLayout from "~/components/AppLayout/AppLayout";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const session = await getServerAuthSession(ctx);
@@ -25,7 +27,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 
-const FeedPage: NextPage = () => {
+const FeedPage: NextPageWithLayout = () => {
   const feed = api.post.infiniteFollowedPosts.useInfiniteQuery(
     {},
     {
@@ -49,7 +51,7 @@ const FeedPage: NextPage = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-[700px] border-x border-neutral-400 border-opacity-25">
+    <>
       <div className="p-2">
         <h1>Feed</h1>
       </div>
@@ -82,8 +84,12 @@ const FeedPage: NextPage = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
+
+FeedPage.getLayout = (page: React.ReactElement) => (
+  <AppLayout>{page}</AppLayout>
+);
 
 export default FeedPage;
