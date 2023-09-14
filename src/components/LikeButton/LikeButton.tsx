@@ -26,7 +26,7 @@ export default function LikeButton({ postId, likes }: LikeButtonProps) {
     onMutate: async (variable) => {
       await utils.post.infiniteFollowedPosts.cancel();
 
-      const prevPosts = utils.post.infiniteFollowedPosts.getInfiniteData();
+      const prevPosts = utils.post.infiniteFollowedPosts.getInfiniteData({});
 
       utils.post.infiniteFollowedPosts.setInfiniteData({}, (prev) => {
         if (!prev)
@@ -43,7 +43,6 @@ export default function LikeButton({ postId, likes }: LikeButtonProps) {
               if (post.id === variable.postId) {
                 return {
                   ...post,
-                  liked: variable.like,
                   likes: variable.like
                     ? [
                         ...post.likes,
@@ -65,16 +64,47 @@ export default function LikeButton({ postId, likes }: LikeButtonProps) {
         };
       });
 
+      const prevPost = utils.post.getPost.getData({ postId: variable.postId });
+
+      utils.post.getPost.setData({ postId: variable.postId }, (prev) => {
+        if (!prev) {
+          return undefined;
+        }
+
+        return {
+          ...prev,
+          likes: variable.like
+            ? [
+                ...prev.likes,
+                {
+                  id: "tempId",
+                  user: {
+                    id: me?.id ?? "",
+                    image: me?.image ?? null,
+                    name: me?.name ?? "",
+                  },
+                },
+              ]
+            : prev.likes.filter((like) => like.user.id !== me?.id),
+        };
+      });
+
       return {
         prevPosts,
+        prevPost,
       };
     },
-    onError: (_, __, context) => {
+    onError: (_, variables, context) => {
       if (context) {
         utils.post.infiniteFollowedPosts.setInfiniteData({}, context.prevPosts);
+        utils.post.getPost.setData(
+          { postId: variables.postId },
+          context.prevPost
+        );
       }
     },
     onSettled: async (_, __, variables) => {
+      void utils.post.getPost.invalidate();
       await utils.post.infiniteFollowedPosts.refetch(
         {},
         {
@@ -97,12 +127,13 @@ export default function LikeButton({ postId, likes }: LikeButtonProps) {
         variant="ghost"
         size="icon"
         className="text-lg transition-transform hover:scale-110 hover:bg-transparent "
-        onClick={() =>
-          likePostMutation.mutate({
+        onClick={(e) => {
+          e.stopPropagation();
+          return likePostMutation.mutate({
             postId,
             like: !liked,
-          })
-        }
+          });
+        }}
       >
         {liked ? <PiHeartStraightFill /> : <PiHeartStraightBold />}
       </Button>
