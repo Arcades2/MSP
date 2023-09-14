@@ -48,16 +48,21 @@ export const likeRouter = createTRPCRouter({
         postId: z.string().nonempty(),
       })
     )
-    .query(async ({ ctx, input }) => {
-      const likes = await ctx.prisma.like.findMany({
+    .query(async ({ ctx, input }) =>
+      ctx.prisma.like.findMany({
         where: {
           postId: input.postId,
         },
-      });
-
-      return {
-        likes: likes.length,
-        liked: !!likes.find((like) => like.userId === ctx.session.user.id),
-      };
-    }),
+        select: {
+          id: true,
+          user: {
+            select: {
+              id: true,
+              image: true,
+              name: true,
+            },
+          },
+        },
+      })
+    ),
 });

@@ -34,7 +34,11 @@ const MusicPost = ({ post }: MusicPostProps) => {
     <div
       role="button"
       tabIndex={0}
-      onClick={() => router.push(`/posts/${post.id}`)}
+      onClick={async (e) => {
+        if (e.target === e.currentTarget) {
+          await router.push(`/posts/${post.id}`);
+        }
+      }}
       onKeyUp={(e) => {
         if (e.code === "Enter") {
           void router.push(`/posts/${post.id}`);
@@ -67,7 +71,7 @@ const MusicPost = ({ post }: MusicPostProps) => {
           }}
         />
       </div>
-      <LikeButton postId={post.id} likes={post.likes} />
+      <LikeButton postId={post.id} initialLikes={post.likes} />
     </div>
   );
 };

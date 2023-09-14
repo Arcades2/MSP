@@ -1,123 +1,82 @@
 import { Button } from "~/components/ui/button";
 import { PiHeartStraightBold, PiHeartStraightFill } from "react-icons/pi";
-import { api, type RouterOutputs } from "~/utils/api";
+import { api } from "~/utils/api";
 import { useSession } from "next-auth/react";
+import React from "react";
 
 export type LikeButtonProps = {
   postId: string;
-  likes: Array<{
+  initialLikes: Array<{
     id: string;
     user: {
       id: string;
-      image?: string | null;
+      image: string | null;
       name: string;
     };
   }>;
 };
 
-export default function LikeButton({ postId, likes }: LikeButtonProps) {
+export default function LikeButton({ postId, initialLikes }: LikeButtonProps) {
   const session = useSession();
   const me = session.data?.user;
 
+  const likesQuery = api.like.getPostLikes.useQuery(
+    { postId },
+    {
+      initialData: initialLikes,
+      staleTime: Infinity,
+    }
+  );
+
   const utils = api.useContext();
-  const liked = !!likes.find((like) => like.user.id === me?.id);
+  const liked = !!likesQuery.data.find((like) => like.user.id === me?.id);
+
+  React.useEffect(() => {
+    utils.like.getPostLikes.setData({ postId }, initialLikes);
+  }, [utils, postId, initialLikes]);
 
   const likePostMutation = api.like.likePost.useMutation({
-    onMutate: async (variable) => {
+    onMutate: async (variables) => {
       await utils.post.infiniteFollowedPosts.cancel();
 
-      const prevPosts = utils.post.infiniteFollowedPosts.getInfiniteData({});
-
-      utils.post.infiniteFollowedPosts.setInfiniteData({}, (prev) => {
-        if (!prev)
-          return {
-            pages: [],
-            pageParams: [],
-          };
-
-        return {
-          ...prev,
-          pages: prev.pages.map((page) => ({
-            ...page,
-            posts: page.posts.map((post) => {
-              if (post.id === variable.postId) {
-                return {
-                  ...post,
-                  likes: variable.like
-                    ? [
-                        ...post.likes,
-                        {
-                          id: "tempId",
-                          user: {
-                            id: me?.id ?? "",
-                            image: me?.image ?? null,
-                            name: me?.name ?? "",
-                          },
-                        },
-                      ]
-                    : post.likes.filter((like) => like.user.id !== me?.id),
-                };
-              }
-              return post;
-            }),
-          })),
-        };
+      const prevLikes = utils.like.getPostLikes.getData({
+        postId: variables.postId,
       });
 
-      const prevPost = utils.post.getPost.getData({ postId: variable.postId });
+      utils.like.getPostLikes.setData({ postId: variables.postId }, (prev) => {
+        if (!prev) return [];
 
-      utils.post.getPost.setData({ postId: variable.postId }, (prev) => {
-        if (!prev) {
-          return undefined;
-        }
-
-        return {
-          ...prev,
-          likes: variable.like
-            ? [
-                ...prev.likes,
-                {
-                  id: "tempId",
-                  user: {
-                    id: me?.id ?? "",
-                    image: me?.image ?? null,
-                    name: me?.name ?? "",
-                  },
+        return variables.like
+          ? [
+              ...prev,
+              {
+                id: "tempId",
+                user: {
+                  id: me?.id ?? "",
+                  image: me?.image ?? null,
+                  name: me?.name ?? "",
                 },
-              ]
-            : prev.likes.filter((like) => like.user.id !== me?.id),
-        };
+              },
+            ]
+          : prev.filter((like) => like.user.id !== me?.id);
       });
 
       return {
-        prevPosts,
-        prevPost,
+        prevLikes,
       };
     },
     onError: (_, variables, context) => {
       if (context) {
-        utils.post.infiniteFollowedPosts.setInfiniteData({}, context.prevPosts);
-        utils.post.getPost.setData(
-          { postId: variables.postId },
-          context.prevPost
+        utils.like.getPostLikes.setData(
+          {
+            postId: variables.postId,
+          },
+          context.prevLikes
         );
       }
     },
     onSettled: async (_, __, variables) => {
-      void utils.post.getPost.invalidate();
-      await utils.post.infiniteFollowedPosts.refetch(
-        {},
-        {
-          refetchPage(page) {
-            const pageData =
-              page as RouterOutputs["post"]["infiniteFollowedPosts"];
-
-            return !!pageData.posts.find(
-              (post) => post.id === variables.postId
-            );
-          },
-        }
-      );
+      await utils.like.getPostLikes.invalidate({ postId: variables.postId });
     },
   });
 
@@ -137,7 +96,7 @@ export default function LikeButton({ postId, likes }: LikeButtonProps) {
       >
         {liked ? <PiHeartStraightFill /> : <PiHeartStraightBold />}
       </Button>
-      <span className="text-lg">{likes.length}</span>
+      <span className="text-lg">{likesQuery.data.length}</span>
     </div>
   );
 }
