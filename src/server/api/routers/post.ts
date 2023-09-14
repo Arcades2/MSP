@@ -99,6 +99,52 @@ export const postRouter = createTRPCRouter({
         },
       })
     ),
+  getUserPosts: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        cursor: z.string().nullish(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { cursor } = input;
+      const LIMIT = 5;
+
+      const posts = await ctx.prisma.post.findMany({
+        take: LIMIT + 1,
+        where: {
+          userId: input.userId,
+        },
+        cursor: cursor ? { id: cursor } : undefined,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          likes: {
+            select: likeSelect,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      let nextCursor: typeof cursor;
+
+      if (posts.length > LIMIT) {
+        const nextPost = posts.pop();
+        nextCursor = nextPost?.id;
+      }
+
+      return {
+        posts,
+        nextCursor,
+      };
+    }),
   // getFollowingPosts: protectedProcedure.query(async ({ ctx }) => {
   //   const posts = await ctx.prisma.post.findMany({
   //     where: {

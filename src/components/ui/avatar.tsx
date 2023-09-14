@@ -2,14 +2,18 @@ import * as React from "react";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 
 import { cn } from "src/utils/shadcn";
+import Link from "next/link";
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
-    image?: string | null;
-    name?: string;
+    user: {
+      image?: string | null;
+      name?: string;
+      id: string;
+    };
   }
->(({ className, image, name, ...props }, ref) => (
+>(({ className, user, ...props }, ref) => (
   <div className="flex items-center gap-2">
     <AvatarPrimitive.Root
       ref={ref}
@@ -19,10 +23,12 @@ const Avatar = React.forwardRef<
       )}
       {...props}
     >
-      <AvatarImage src={image ?? undefined} />
-      <AvatarFallback>{name?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+      <AvatarImage src={user.image ?? undefined} />
+      <AvatarFallback>{user.name?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
     </AvatarPrimitive.Root>
-    {name}
+    <Link className="hover:underline" href={`/profile/${user.id}`}>
+      {user.name}
+    </Link>
   </div>
 ));
 Avatar.displayName = AvatarPrimitive.Root.displayName;

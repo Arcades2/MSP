@@ -6,7 +6,7 @@ import { Avatar } from "~/components/ui/avatar";
 import LocalDate from "~/components/LocalDate";
 import LikeButton from "~/components/LikeButton/LikeButton";
 import { Skeleton } from "~/components/ui/skeleton";
-import Link from "next/link";
+import { useRouter } from "next/router";
 
 const ReactPlayer = dynamic(() => import("react-player"), {
   ssr: false,
@@ -20,6 +20,7 @@ type MusicPostProps = {
 const MusicPost = ({ post }: MusicPostProps) => {
   const playerState = usePlayerState(post.id);
   const playersActions = usePlayersActions();
+  const router = useRouter();
 
   useEffect(() => {
     playersActions.addPlayer(post.id);
@@ -30,9 +31,19 @@ const MusicPost = ({ post }: MusicPostProps) => {
   }, [playersActions, post.id]);
 
   return (
-    <Link href={`/posts/${post.id}`} className="flex flex-col gap-4 p-2">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/posts/${post.id}`)}
+      onKeyUp={(e) => {
+        if (e.code === "Enter") {
+          void router.push(`/posts/${post.id}`);
+        }
+      }}
+      className="flex flex-col gap-4 p-2"
+    >
       <div className="mb-4 flex items-center gap-2">
-        <Avatar image={post.user.image} name={post.user.name} />
+        <Avatar user={post.user} />
         <span className="text-gray-400">·</span>
         <LocalDate date={post.createdAt} className="text-sm text-gray-400" />
       </div>
@@ -57,7 +68,7 @@ const MusicPost = ({ post }: MusicPostProps) => {
         />
       </div>
       <LikeButton postId={post.id} likes={post.likes} />
-    </Link>
+    </div>
   );
 };
 
